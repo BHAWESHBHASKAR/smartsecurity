@@ -19,41 +19,25 @@ dotenv.config({ path: resolve(__dirname, '../.env') });
 const app = express();
 const httpServer = createServer(app);
 
-const rawOrigins = [
-  process.env.FRONTEND_URL?.replace(/\/$/, ''),
-  'http://localhost:3000',
-  'http://localhost:3001',
-];
-
-const allowedOrigins = Array.from(
-  new Set(
-    rawOrigins.filter((origin): origin is string => Boolean(origin))
-  )
-);
-
-function isAllowedOrigin(origin: string) {
-  if (allowedOrigins.includes(origin)) {
-    return true;
-  }
-
-  try {
-    const url = new URL(origin);
-    return allowedOrigins.some((allowed) => {
-      const allowedUrl = new URL(allowed);
-      return url.hostname === allowedUrl.hostname && url.protocol === allowedUrl.protocol;
-    });
-  } catch {
-    return false;
-  }
-}
-
 const corsOptions: cors.CorsOptions = {
   origin(origin, callback) {
     if (!origin) {
       return callback(null, true);
     }
 
-    if (isAllowedOrigin(origin)) {
+    const normalizedOrigin = origin.replace(/\/$/, '');
+    const envOrigins = [
+      process.env.FRONTEND_URL,
+      'http://13.53.43.229:3001',
+      'http://localhost:3000',
+      'http://localhost:3001',
+    ].filter((value): value is string => Boolean(value));
+
+    const allowedOrigins = new Set(
+      envOrigins.map((value) => value.replace(/\/$/, ''))
+    );
+
+    if (allowedOrigins.has(normalizedOrigin)) {
       return callback(null, true);
     }
 
@@ -61,6 +45,9 @@ const corsOptions: cors.CorsOptions = {
     return callback(new Error('Not allowed by CORS'));
   },
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  exposedHeaders: ['Content-Disposition'],
 };
 
 const io = new Server(httpServer, {
