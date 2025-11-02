@@ -31,13 +31,29 @@ const allowedOrigins = Array.from(
   )
 );
 
+function isAllowedOrigin(origin: string) {
+  if (allowedOrigins.includes(origin)) {
+    return true;
+  }
+
+  try {
+    const url = new URL(origin);
+    return allowedOrigins.some((allowed) => {
+      const allowedUrl = new URL(allowed);
+      return url.hostname === allowedUrl.hostname && url.protocol === allowedUrl.protocol;
+    });
+  } catch {
+    return false;
+  }
+}
+
 const corsOptions: cors.CorsOptions = {
   origin(origin, callback) {
     if (!origin) {
       return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) {
+    if (isAllowedOrigin(origin)) {
       return callback(null, true);
     }
 
