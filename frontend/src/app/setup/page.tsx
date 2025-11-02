@@ -2,32 +2,20 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import dynamic from 'next/dynamic';
 import { IconShieldCheck, IconVideo, IconPhone, IconBuilding, IconPlus, IconX } from '@tabler/icons-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import LocationInput from '@/components/ui/LocationInput';
+import GoogleMapsInput from '@/components/ui/GoogleMapsInput';
 import { validateIP, validatePhone, validateRTSP } from '@/lib/validation';
 import api from '@/lib/api';
-
-// Dynamic import for LeafletMap to avoid SSR issues
-const LeafletMap = dynamic(() => import('@/components/ui/LeafletMap'), {
-  ssr: false,
-  loading: () => (
-    <div className="w-full h-full bg-muted animate-pulse rounded-lg flex items-center justify-center">
-      <p className="text-muted-foreground text-sm">Loading map...</p>
-    </div>
-  ),
-});
 
 export default function SetupPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const [showMap, setShowMap] = useState(false);
 
   const [formData, setFormData] = useState({
     storeName: '',
@@ -153,48 +141,13 @@ export default function SetupPage() {
       latitude: data.latitude,
       longitude: data.longitude,
     }));
-
-    // Show map with animation when address is selected
-    if (data.address && !showMap) {
-      setShowMap(true);
-    }
-  };
-
-  const handleMarkerDragEnd = async (lat: number, lng: number) => {
-    // Update coordinates
-    setFormData(prev => ({
-      ...prev,
-      latitude: lat,
-      longitude: lng,
-    }));
-
-    // Reverse geocode to get address
-    try {
-      const response = await fetch(
-        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`,
-        {
-          headers: {
-            'User-Agent': 'SmartSecurityMonitoring/1.0',
-          },
-        }
-      );
-      const data = await response.json();
-      if (data.display_name) {
-        setFormData(prev => ({
-          ...prev,
-          address: data.display_name,
-        }));
-      }
-    } catch (error) {
-      console.error('Failed to reverse geocode:', error);
-    }
   };
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <div className={`w-full transition-all duration-700 ease-in-out ${showMap ? 'max-w-7xl' : 'max-w-2xl'}`}>
+      <div className="w-full max-w-2xl transition-all duration-700 ease-in-out">
         {/* Header */}
-        <div className={`text-center mb-6 transition-all duration-500 ${showMap ? 'opacity-0 h-0 overflow-hidden' : 'opacity-100'}`}>
+        <div className="text-center mb-6 transition-all duration-500">
           <div className="inline-flex items-center justify-center w-12 h-12 bg-primary rounded-full mb-3">
             <IconShieldCheck className="w-6 h-6 text-primary-foreground" stroke={1.5} />
           </div>
@@ -207,27 +160,9 @@ export default function SetupPage() {
         </div>
 
         {/* Split Layout Container */}
-        <div className={`grid transition-all duration-700 ease-in-out ${showMap ? 'grid-cols-2 gap-6' : 'grid-cols-1'}`}>
-          {/* Map Section - Left Side */}
-          <div className={`transition-all duration-700 ease-in-out ${showMap
-            ? 'opacity-100 translate-x-0'
-            : 'opacity-0 -translate-x-full absolute pointer-events-none'
-            }`}>
-            {showMap && (
-              <div className="h-full min-h-[600px] bg-card rounded-lg border border-border overflow-hidden shadow-lg">
-                <LeafletMap
-                  center={[formData.latitude, formData.longitude]}
-                  zoom={13}
-                  onMarkerDragEnd={handleMarkerDragEnd}
-                  className="h-full"
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Form Section - Right Side (or Center when no map) */}
-          <div className={`transition-all duration-700 ease-in-out ${showMap ? 'translate-x-0' : 'translate-x-0'
-            }`}>
+        <div className="grid transition-all duration-700 ease-in-out grid-cols-1">
+          {/* Form Section */}
+          <div className="transition-all duration-700 ease-in-out">
             <Card>
               <CardHeader className="pb-3">
                 <CardTitle className="text-lg font-serif">Store Setup</CardTitle>
@@ -269,7 +204,7 @@ export default function SetupPage() {
                         )}
                       </div>
 
-                      <LocationInput
+                      <GoogleMapsInput
                         onLocationSelect={handleLocationSelect}
                         initialAddress={formData.address}
                         error={errors.address}
@@ -363,7 +298,7 @@ export default function SetupPage() {
         </div>
 
         {/* Footer */}
-        <p className={`text-center text-muted-foreground text-xs mt-4 transition-opacity duration-500 ${showMap ? 'opacity-50' : 'opacity-100'}`}>
+        <p className="text-center text-muted-foreground text-xs mt-4 transition-opacity duration-500">
           Complete setup to start monitoring your store
         </p>
       </div>
