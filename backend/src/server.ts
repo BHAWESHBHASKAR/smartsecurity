@@ -32,7 +32,18 @@ const allowedOrigins = Array.from(
 );
 
 const corsOptions: cors.CorsOptions = {
-  origin: allowedOrigins,
+  origin(origin, callback) {
+    if (!origin) {
+      return callback(null, true);
+    }
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    console.warn(`Blocked CORS origin: ${origin}`);
+    return callback(new Error('Not allowed by CORS'));
+  },
   credentials: true,
 };
 
@@ -42,6 +53,7 @@ const io = new Server(httpServer, {
 
 // Middleware
 app.use(cors(corsOptions));
+app.options('*', cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
