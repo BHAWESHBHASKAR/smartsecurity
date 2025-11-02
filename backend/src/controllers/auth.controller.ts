@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
+import jwt, { type SignOptions, type Secret } from 'jsonwebtoken';
 import { z } from 'zod';
 import { prisma } from '../lib/prisma';
 
@@ -9,6 +9,47 @@ const loginSchema = z.object({
   password: z.string().min(1, 'Password is required'),
   role: z.enum(['CLIENT', 'ADMIN']),
 });
+
+const jwtSecretEnv = process.env.JWT_SECRET;
+const refreshTokenSecretEnv = process.env.REFRESH_TOKEN_SECRET;
+
+if (!jwtSecretEnv) {
+  throw new Error('JWT_SECRET environment variable is not set');
+}
+
+if (!refreshTokenSecretEnv) {
+  throw new Error('REFRESH_TOKEN_SECRET environment variable is not set');
+}
+
+const jwtSecret: Secret = jwtSecretEnv;
+const refreshTokenSecret: Secret = refreshTokenSecretEnv;
+
+type JwtExpiresIn = NonNullable<SignOptions['expiresIn']>;
+
+const parseExpiresIn = (value: string | undefined, fallback: JwtExpiresIn): JwtExpiresIn => {
+  if (!value) {
+    return fallback;
+  }
+
+  const trimmed = value.trim();
+
+  if (/^\d+$/.test(trimmed)) {
+    return Number(trimmed);
+  }
+
+  if (/^\d+(ms|s|m|h|d|w|y)$/i.test(trimmed)) {
+    return trimmed as JwtExpiresIn;
+  }
+
+  console.warn(`Invalid JWT expires value: "${value}". Falling back to ${fallback}.`);
+  return fallback;
+};
+
+const accessTokenExpiresIn = parseExpiresIn(process.env.JWT_EXPIRES_IN, '15m');
+const refreshTokenExpiresIn = parseExpiresIn(process.env.REFRESH_TOKEN_EXPIRES_IN, '7d');
+
+const accessTokenOptions: SignOptions = { expiresIn: accessTokenExpiresIn };
+const refreshTokenOptions: SignOptions = { expiresIn: refreshTokenExpiresIn };
 
 export async function login(req: Request, res: Response, next: NextFunction) {
   try {
@@ -60,14 +101,14 @@ export async function login(req: Request, res: Response, next: NextFunction) {
     // Generate tokens
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
+      jwtSecret,
+      accessTokenOptions
     );
 
     const refreshToken = jwt.sign(
       { id: user.id },
-      process.env.REFRESH_TOKEN_SECRET!,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d' }
+      refreshTokenSecret,
+      refreshTokenOptions
     );
 
     // Remove password from response
@@ -102,7 +143,7 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
       });
     }
 
-    const decoded = jwt.verify(refreshToken, process.env.REFRESH_TOKEN_SECRET!) as { id: string };
+    const decoded = jwt.verify(refreshToken, refreshTokenSecret) as { id: string };
 
     const user = await prisma.user.findUnique({
       where: { id: decoded.id },
@@ -122,8 +163,8 @@ export async function refreshToken(req: Request, res: Response, next: NextFuncti
 
     const newToken = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
+      jwtSecret,
+      accessTokenOptions
     );
 
     res.json({
@@ -198,14 +239,14 @@ export async function register(req: Request, res: Response, next: NextFunction) 
     // Generate tokens
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
-      process.env.JWT_SECRET!,
-      { expiresIn: process.env.JWT_EXPIRES_IN || '15m' }
+      jwtSecret,
+      { expiresIn: accessTokenExpiresIn }
     );
 
     const refreshToken = jwt.sign(
       { id: user.id },
-      process.env.REFRESH_TOKEN_SECRET!,
-      { expiresIn: process.env.REFRESH_TOKEN_EXPIRES_IN || '7d' }
+      refreshTokenSecret,
+      { expiresIn: refreshTokenExpiresIn }
     );
 
     res.status(201).json({
