@@ -54,7 +54,8 @@ desktop-app/
 # Streaming files
 recordings/
 streams/
-*.ts
+recordings/**/*.ts
+streams/**/*.ts
 *.m3u8
 
 # Temporary files
