@@ -6,8 +6,7 @@ module.exports = {
       cwd: '/opt/smart-security',
       env: {
         NODE_ENV: 'production',
-        PORT: 5001,
-        FRONTEND_URL: 'http://localhost:3001'
+        PORT: 5001
       },
       instances: 1,
       autorestart: true,
@@ -21,7 +20,8 @@ module.exports = {
       cwd: '/opt/smart-security/frontend',
       env: {
         NODE_ENV: 'production',
-        PORT: 3001
+        PORT: 3001,
+        HOST: '0.0.0.0'
       },
       instances: 1,
       autorestart: true,
