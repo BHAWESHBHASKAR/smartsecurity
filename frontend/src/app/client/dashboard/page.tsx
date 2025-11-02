@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
@@ -32,14 +32,32 @@ export default function ClientDashboard() {
   const [addCameraError, setAddCameraError] = useState('');
   const [popupAlert, setPopupAlert] = useState<Alert | null>(null);
 
-  useEffect(() => {
-    if (!isLoading && user) {
-      // Fetch fresh user data to check if store exists
-      checkUserStore();
+  const fetchStoreData = useCallback(async () => {
+    try {
+      const response = await api.get('/users/me');
+      if (response.data.success && response.data.data.store) {
+        setStore(response.data.data.store);
+      }
+    } catch (error) {
+      console.error('Failed to fetch store data:', error);
     }
-  }, [user, isLoading, router]);
+  }, []);
 
-  const checkUserStore = async () => {
+  const fetchAlerts = useCallback(async () => {
+    try {
+      const response = await api.get('/alerts?status=ACTIVE');
+      if (response.data.success) {
+        const activeAlerts = response.data.data;
+        setAlerts(activeAlerts);
+        // If there are active alerts, siren should be ON
+        setSirenStatus(activeAlerts.length > 0);
+      }
+    } catch (error) {
+      console.error('Failed to fetch alerts:', error);
+    }
+  }, []);
+
+  const checkUserStore = useCallback(async () => {
     try {
       const response = await api.get('/users/me');
       const userData = response.data.data;
@@ -57,7 +75,14 @@ export default function ClientDashboard() {
       console.error('Failed to fetch user data:', error);
       router.push('/setup');
     }
-  };
+  }, [fetchAlerts, fetchStoreData, router]);
+
+  useEffect(() => {
+    if (!isLoading && user) {
+      // Fetch fresh user data to check if store exists
+      checkUserStore();
+    }
+  }, [user, isLoading, checkUserStore]);
 
   // Real-time socket updates
   useSocketEvent<Alert>('alert:new', (newAlert) => {
@@ -83,31 +108,6 @@ export default function ClientDashboard() {
       setSirenStatus(data.status);
     }
   });
-
-  const fetchStoreData = async () => {
-    try {
-      const response = await api.get('/users/me');
-      if (response.data.success && response.data.data.store) {
-        setStore(response.data.data.store);
-      }
-    } catch (error) {
-      console.error('Failed to fetch store data:', error);
-    }
-  };
-
-  const fetchAlerts = async () => {
-    try {
-      const response = await api.get('/alerts?status=ACTIVE');
-      if (response.data.success) {
-        const activeAlerts = response.data.data;
-        setAlerts(activeAlerts);
-        // If there are active alerts, siren should be ON
-        setSirenStatus(activeAlerts.length > 0);
-      }
-    } catch (error) {
-      console.error('Failed to fetch alerts:', error);
-    }
-  };
 
   const handleLogout = async () => {
     await signOut({ redirect: true, callbackUrl: '/login' });

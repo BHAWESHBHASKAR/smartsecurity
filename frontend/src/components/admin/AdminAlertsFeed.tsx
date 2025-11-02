@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { AlertTriangle, Phone, MapPin, Clock, CheckCircle, Circle, HandMetal } from 'lucide-react';
 import type { Alert } from '@/types';
 import api from '@/lib/api';
@@ -119,11 +120,13 @@ export default function AdminAlertsFeed({ alerts, onAlertsUpdate }: AdminAlertsF
 
             {/* Alert Image */}
             {alert.imageUrl && (
-              <div className="mb-3 rounded-lg overflow-hidden border border-[#2e2e2e]">
-                <img
+              <div className="relative mb-3 h-36 w-full overflow-hidden rounded-lg border border-[#2e2e2e]">
+                <Image
                   src={alert.imageUrl}
                   alt="Alert"
-                  className="w-full h-36 object-cover"
+                  fill
+                  className="object-cover"
+                  sizes="(max-width: 768px) 100vw, 50vw"
                 />
               </div>
             )}
