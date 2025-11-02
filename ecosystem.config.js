@@ -6,7 +6,8 @@ module.exports = {
       cwd: '/opt/smart-security',
       env: {
         NODE_ENV: 'production',
-        PORT: 5001
+        PORT: 5001,
+        FRONTEND_URL: 'http://13.53.43.229:3001'
       },
       instances: 1,
       autorestart: true,
