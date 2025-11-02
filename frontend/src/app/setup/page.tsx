@@ -199,7 +199,7 @@ export default function SetupPage() {
             <IconShieldCheck className="w-6 h-6 text-primary-foreground" stroke={1.5} />
           </div>
           <h1 className="text-2xl font-bold text-foreground mb-1 font-serif">
-            Welcome! Let's Set Up Your Store
+            Welcome! Let&rsquo;s Set Up Your Store
           </h1>
           <p className="text-muted-foreground text-sm">
             Please provide your store details to get started with monitoring

@@ -106,7 +106,7 @@ export default function PanicButton({ onAlertCreated }: PanicButtonProps) {
             <div className="bg-orange-600/10 border border-orange-600/30 rounded-lg p-3 mb-4">
               <p className="text-sm text-foreground font-medium mb-2">This will immediately:</p>
               <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                <li className="list-disc">Activate your store's siren</li>
+                <li className="list-disc">Activate your store&rsquo;s siren</li>
                 <li className="list-disc">Send WhatsApp notification to police</li>
                 <li className="list-disc">Alert all administrators</li>
                 <li className="list-disc">Create an emergency alert record</li>
