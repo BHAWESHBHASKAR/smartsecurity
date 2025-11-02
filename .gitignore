@@ -1,0 +1,62 @@
+# Dependencies
+node_modules/
+frontend/node_modules/
+backend/node_modules/
+
+# Environment variables
+.env
+.env.local
+.env.production
+frontend/.env
+frontend/.env.local
+backend/.env
+
+# Build outputs
+frontend/.next/
+frontend/out/
+backend/dist/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Testing
+coverage/
+
+# Prisma
+backend/prisma/migrations/
+
+# Misc
+*.pem
+
+# Development files
+*.md.backup
+test-*
+optional/
+env/
+virtual/
+.venv/
+.kiro/
+desktop-app/
+
+# Streaming files
+recordings/
+streams/
+*.ts
+*.m3u8
+
+# Temporary files
+*.tmp
+*.temp

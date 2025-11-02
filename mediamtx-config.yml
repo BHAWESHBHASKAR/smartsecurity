@@ -1,0 +1,69 @@
+# MediaMTX configuration for Smart Security System
+logLevel: info
+logDestinations: [stdout]
+readTimeout: 10s
+writeTimeout: 10s
+writeQueueSize: 1024
+udpMaxPayloadSize: 1472
+
+# API server for remote control
+api: yes
+apiAddress: :9997
+
+# Metrics for monitoring
+metrics: yes
+metricsAddress: :9998
+
+# RTSP server (for receiving RTSP streams)
+rtsp: yes
+rtspAddress: :8554
+rtspTransports: [tcp]
+rtspEncryption: "no"
+
+# HLS server (for web browsers) - Higher latency but more compatible
+hls: yes
+hlsAddress: :8888
+hlsEncryption: no
+hlsAllowOrigin: "*"
+hlsVariant: lowLatency
+hlsSegmentCount: 3
+hlsSegmentDuration: 500ms
+hlsPartDuration: 200ms
+hlsSegmentMaxSize: 50M
+
+# WebRTC server (for ultra-low latency < 1 second)
+webrtc: yes
+webrtcAddress: :8889
+webrtcEncryption: no
+webrtcAllowOrigin: "*"
+webrtcTrustedProxies: []
+webrtcLocalUDPAddress: :8189
+webrtcLocalTCPAddress: :8189
+webrtcICEServers2: []
+
+# RTMP server (optional, for additional input sources)
+rtmp: yes
+rtmpAddress: :1935
+rtmpEncryption: "no"
+
+# Default path settings
+pathDefaults:
+  source: publisher
+  sourceOnDemand: no
+  sourceOnDemandStartTimeout: 10s
+  sourceOnDemandCloseAfter: 10s
+  
+  # Recording settings
+  record: no
+  recordPath: ./recordings/%path/%Y-%m-%d_%H-%M-%S-%f
+  recordFormat: fmp4
+  recordPartDuration: 1s
+  recordSegmentDuration: 1h
+  recordDeleteAfter: 24h
+
+# Paths for streams (will be dynamically configured via API)
+paths:
+  # Demo video stream for testing
+  demo-video:
+    runOnDemand: ffmpeg -re -stream_loop -1 -i "./video/demo-video.mp4" -c copy -f rtsp rtsp://localhost:$RTSP_PORT/$MTX_PATH
+    runOnDemandCloseAfter: 30s

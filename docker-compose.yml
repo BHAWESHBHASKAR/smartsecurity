@@ -1,0 +1,41 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:7
+    container_name: smart-security-db
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
+      MONGO_INITDB_DATABASE: smart-security
+    volumes:
+      - mongodb_data:/data/db
+
+  smart-security:
+    build: .
+    container_name: smart-security-app
+    restart: unless-stopped
+    ports:
+      - "3001:3001"   # Frontend
+      - "5001:5001"   # Backend API
+      - "8554:8554"   # RTSP
+      - "8888:8888"   # HLS
+      - "8889:8889"   # WebRTC
+      - "9997:9997"   # MediaMTX API
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=mongodb://admin:password@mongodb:27017/smart-security?authSource=admin
+      - JWT_SECRET=your-secure-jwt-secret-change-this
+      - FRONTEND_URL=http://localhost:3001
+    depends_on:
+      - mongodb
+    volumes:
+      - ./video:/app/video
+      - streams_data:/app/streams
+
+volumes:
+  mongodb_data:
+  streams_data:

@@ -1,0 +1,98 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  email     String   @unique
+  phone     String
+  password  String
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  store     Store?
+}
+
+enum Role {
+  CLIENT
+  ADMIN
+}
+
+model Store {
+  id            String     @id @default(auto()) @map("_id") @db.ObjectId
+  userId        String     @unique @db.ObjectId
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name          String
+  address       String
+  latitude      Float
+  longitude     Float
+  policeNumber  String
+  cameras       Camera[]
+  alerts        Alert[]
+  sirenLogs     SirenLog[]
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
+}
+
+model Camera {
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  storeId    String       @db.ObjectId
+  store      Store        @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  ipAddress  String
+  streamUrl  String?
+  status     CameraStatus @default(INACTIVE)
+  position   Int          @default(0)
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+}
+
+enum CameraStatus {
+  ACTIVE
+  INACTIVE
+  ERROR
+}
+
+model Alert {
+  id             String        @id @default(auto()) @map("_id") @db.ObjectId
+  storeId        String        @db.ObjectId
+  store          Store         @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  detectionType  DetectionType
+  imageUrl       String
+  timestamp      DateTime      @default(now())
+  status         AlertStatus   @default(ACTIVE)
+  resolvedAt     DateTime?
+  resolvedBy     String?
+  initiatedBy    String?
+  createdAt      DateTime      @default(now())
+}
+
+enum DetectionType {
+  HELMET
+  GUN
+  MANUAL
+}
+
+enum AlertStatus {
+  ACTIVE
+  RESOLVED
+}
+
+model SirenLog {
+  id          String      @id @default(auto()) @map("_id") @db.ObjectId
+  storeId     String      @db.ObjectId
+  store       Store       @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  action      SirenAction
+  triggeredBy String
+  timestamp   DateTime    @default(now())
+  alertId     String?
+}
+
+enum SirenAction {
+  ON
+  OFF
+}

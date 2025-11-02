@@ -1,0 +1,42 @@
+# AWS EC2 User Data Script for Smart Security System
+# Copy this into EC2 User Data when launching instance
+
+#!/bin/bash
+yum update -y
+
+# Install Node.js 18
+curl -fsSL https://rpm.nodesource.com/setup_18.x | bash -
+yum install -y nodejs
+
+# Install FFmpeg
+yum install -y epel-release
+yum install -y ffmpeg
+
+# Install PM2 for process management
+npm install -g pm2
+
+# Create app directory
+mkdir -p /opt/smart-security
+cd /opt/smart-security
+
+# Clone or upload your project here
+# git clone <your-repo-url> .
+
+# Make scripts executable
+chmod +x start.sh stop.sh
+
+# Install dependencies
+cd backend && npm install --production
+cd ../frontend && npm install --production && npm run build
+cd ..
+
+# Start services with PM2
+pm2 start ecosystem.config.js
+pm2 startup
+pm2 save
+
+# Configure nginx (optional)
+yum install -y nginx
+# Add nginx configuration here if needed
+
+echo "Smart Security System deployed successfully!"
