@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { IconAlertTriangle, IconX, IconBell, IconPhone, IconShieldCheck } from '@tabler/icons-react';
 import type { Alert } from '@/types';
 import api from '@/lib/api';
+import Image from 'next/image';
 
 interface AlertPopupProps {
   alert: Alert | null;
@@ -78,11 +79,13 @@ export default function AlertPopup({ alert, onClose, onSirenToggle }: AlertPopup
         <div className="p-6">
           {/* Alert Image */}
           {alert.imageUrl && (
-            <div className="mb-4 rounded-lg overflow-hidden border border-border">
-              <img
+            <div className="relative mb-4 h-64 w-full overflow-hidden rounded-lg border border-border">
+              <Image
                 src={alert.imageUrl}
                 alt="Alert detection"
-                className="w-full h-64 object-cover"
+                fill
+                className="object-cover"
+                sizes="100vw"
               />
             </div>
           )}

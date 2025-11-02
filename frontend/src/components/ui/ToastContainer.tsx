@@ -1,14 +1,9 @@
 'use client';
 
-import { createContext, useContext, useState, useCallback, ReactNode } from 'react';
-import Toast, { ToastType } from './Toast';
+import { createContext, useContext, ReactNode } from 'react';
+import { toast } from '@/hooks/use-toast';
 
-interface ToastData {
-  id: string;
-  type: ToastType;
-  message: string;
-  duration?: number;
-}
+export type ToastType = 'success' | 'error' | 'warning' | 'info';
 
 interface ToastContextType {
   showToast: (type: ToastType, message: string, duration?: number) => void;
@@ -17,32 +12,20 @@ interface ToastContextType {
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export function ToastProvider({ children }: { children: ReactNode }) {
-  const [toasts, setToasts] = useState<ToastData[]>([]);
+  const showToast = (type: ToastType, message: string, duration = 5000) => {
+    const toastProps = {
+      title: type === 'error' ? 'Error' : type === 'success' ? 'Success' : type === 'warning' ? 'Warning' : 'Info',
+      description: message,
+      variant: type === 'error' ? 'destructive' as const : 'default' as const,
+      duration,
+    };
 
-  const showToast = useCallback((type: ToastType, message: string, duration = 5000) => {
-    const id = Math.random().toString(36).substring(7);
-    setToasts((prev) => [...prev, { id, type, message, duration }]);
-  }, []);
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((toast) => toast.id !== id));
-  }, []);
+    toast(toastProps);
+  };
 
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-md">
-        {toasts.map((toast) => (
-          <Toast
-            key={toast.id}
-            id={toast.id}
-            type={toast.type}
-            message={toast.message}
-            duration={toast.duration}
-            onClose={removeToast}
-          />
-        ))}
-      </div>
     </ToastContext.Provider>
   );
 }

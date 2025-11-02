@@ -24,6 +24,11 @@ export default function LeafletMap({
   const mapRef = useRef<L.Map | null>(null);
   const markerRef = useRef<L.Marker | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const dragHandlerRef = useRef(onMarkerDragEnd);
+
+  useEffect(() => {
+    dragHandlerRef.current = onMarkerDragEnd;
+  }, [onMarkerDragEnd]);
 
   useEffect(() => {
     if (!containerRef.current || mapRef.current) return;
@@ -64,7 +69,7 @@ export default function LeafletMap({
       // Handle marker drag
       marker.on('dragend', () => {
         const position = marker.getLatLng();
-        onMarkerDragEnd(position.lat, position.lng);
+        dragHandlerRef.current(position.lat, position.lng);
       });
 
       // Wait for tiles to load before invalidating size
@@ -88,7 +93,7 @@ export default function LeafletMap({
         mapRef.current = null;
       }
     };
-  }, []);
+  }, [center, zoom, onMarkerDragEnd]);
 
   // Update map center and marker when center prop changes
   useEffect(() => {

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import Hls from 'hls.js';
 import { Loader2, Maximize2, Minimize2, Play, AlertCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -41,20 +41,26 @@ export function VideoPlayer({
            (lowerUrl.includes('/api/stream.mjpeg') && !lowerUrl.includes('.m3u8')); // go2rtc MJPEG endpoint but not HLS
   }, [streamUrl]);
 
-  const updateStatus = (newStatus: 'loading' | 'playing' | 'error') => {
-    setStatus(newStatus);
-    onStatusChange?.(newStatus);
-  };
+  const updateStatus = useCallback(
+    (newStatus: 'loading' | 'playing' | 'error') => {
+      setStatus(newStatus);
+      onStatusChange?.(newStatus);
+    },
+    [onStatusChange]
+  );
 
-  const handleError = (error: Error, message: string) => {
-    console.error('Video player error:', error);
-    setErrorMessage(message);
-    updateStatus('error');
-    onError?.(error);
-  };
+  const handleError = useCallback(
+    (error: Error, message: string) => {
+      console.error('Video player error:', error);
+      setErrorMessage(message);
+      updateStatus('error');
+      onError?.(error);
+    },
+    [onError, updateStatus]
+  );
 
   // Initialize MJPEG stream (continuous image updates)
-  const initializeMjpegStream = () => {
+  const initializeMjpegStream = useCallback(() => {
     const image = mjpegRef.current;
     if (!image) return;
 
@@ -79,9 +85,9 @@ export function VideoPlayer({
 
     // Set source with cache-busting to get fresh frames
     image.src = `${streamUrl}?t=${Date.now()}`;
-  };
+  }, [streamUrl, updateStatus, handleError]);
 
-  const initializeHlsStream = () => {
+  const initializeHlsStream = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
 
@@ -174,18 +180,18 @@ export function VideoPlayer({
         'Your browser does not support video streaming'
       );
     }
-  };
+  }, [streamUrl, updateStatus, handleError]);
 
-  const initializePlayer = () => {
+  const initializePlayer = useCallback(() => {
     console.log('Initializing player for:', streamUrl, 'MJPEG:', isMjpegStream);
     if (isMjpegStream) {
       initializeMjpegStream();
     } else {
       initializeHlsStream();
     }
-  };
+  }, [initializeHlsStream, initializeMjpegStream, isMjpegStream, streamUrl]);
 
-  const cleanup = () => {
+  const cleanup = useCallback(() => {
     if (hlsRef.current) {
       hlsRef.current.destroy();
       hlsRef.current = null;
@@ -193,15 +199,15 @@ export function VideoPlayer({
     if (mjpegRef.current) {
       mjpegRef.current.src = '';
     }
-  };
+  }, []);
 
-  const handleRetry = () => {
+  const handleRetry = useCallback(() => {
     cleanup();
     setErrorMessage('');
     initializePlayer();
-  };
+  }, [cleanup, initializePlayer]);
 
-  const toggleFullscreen = async () => {
+  const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
 
     try {
@@ -215,7 +221,7 @@ export function VideoPlayer({
     } catch (error) {
       console.error('Fullscreen error:', error);
     }
-  };
+  }, []);
 
   useEffect(() => {
     setErrorMessage('');
@@ -237,7 +243,7 @@ export function VideoPlayer({
       cleanup();
       document.removeEventListener('fullscreenchange', handleFullscreenChange);
     };
-  }, [streamUrl, isMjpegStream]);
+  }, [cleanup, initializePlayer, isMjpegStream, streamUrl, updateStatus]);
 
   useEffect(() => {
     if (!isMjpegStream) {
@@ -262,18 +268,17 @@ export function VideoPlayer({
       updateStatus('playing');
       loadAttempts = 0;
     };
-
+    
     const handleImgError = () => {
       if (!isActive) return;
       loadAttempts++;
       console.error(`MJPEG stream error (attempt ${loadAttempts}/${maxAttempts})`);
-      
+
       if (loadAttempts < maxAttempts) {
-        // Retry with a fresh URL to bypass cache
-        const retryUrl = streamUrl.includes('?') 
+        const retryUrl = streamUrl.includes('?')
           ? `${streamUrl}&retry=${Date.now()}`
           : `${streamUrl}?retry=${Date.now()}`;
-        
+
         retryTimeoutRef.current = setTimeout(() => {
           if (isActive && img) {
             console.log('Retrying MJPEG stream...');
@@ -282,7 +287,7 @@ export function VideoPlayer({
         }, 2000);
       } else {
         handleError(
-          new Error('MJPEG stream error'), 
+          new Error('MJPEG stream error'),
           'Unable to load video stream. Please check if the camera is online.'
         );
       }
@@ -308,7 +313,7 @@ export function VideoPlayer({
       img.removeEventListener('error', handleImgError);
       img.src = '';
     };
-  }, [streamUrl, isMjpegStream]);
+  }, [handleError, isMjpegStream, streamUrl, updateStatus]);
 
   return (
     <div
@@ -324,6 +329,8 @@ export function VideoPlayer({
         playsInline
         muted
       />
+      {/* MJPEG element requires direct img access for streaming */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         ref={mjpegRef}
         className={cn('w-full h-full object-contain', !isMjpegStream && 'hidden')}

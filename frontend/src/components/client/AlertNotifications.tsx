@@ -1,6 +1,7 @@
 'use client';
 
 import { IconAlertTriangle, IconPhone, IconX, IconCircleCheck, IconHandStop } from '@tabler/icons-react';
+import Image from 'next/image';
 import type { Alert } from '@/types';
 import api from '@/lib/api';
 import { Button } from '../ui/button';
@@ -59,11 +60,13 @@ export default function AlertNotifications({ alerts, onAlertsUpdate }: AlertNoti
             <div className="flex items-start gap-3">
               {/* Alert Image */}
               {alert.imageUrl && (
-                <div className="flex-shrink-0">
-                  <img
+                <div className="relative flex-shrink-0 h-24 w-24 overflow-hidden rounded-lg border border-border">
+                  <Image
                     src={alert.imageUrl}
                     alt="Alert"
-                    className="w-24 h-24 object-cover rounded-lg border border-border"
+                    fill
+                    sizes="96px"
+                    className="object-cover"
                   />
                 </div>
               )}
